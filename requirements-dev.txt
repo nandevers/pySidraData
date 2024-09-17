@@ -1,0 +1,17 @@
+# Core dependencies (also needed for development)
+-r requirements.txt
+
+# Testing
+pytest>=6.0
+coverage>=5.0
+
+# Linting and formatting
+flake8>=3.8
+black>=22.0
+isort>=5.0
+
+# Pre-commit hooks
+pre-commit>=2.0
+
+# Type checking
+mypy>=0.800

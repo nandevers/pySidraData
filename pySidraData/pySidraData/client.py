@@ -1,44 +1,16 @@
-from dataclasses import dataclass, field
-from typing import List, Dict, Any
 import requests
 import pandas as pd
-
-# Define data classes for structured data
-@dataclass
-class Aggregate:
-    id: str
-    nome: str
-
-@dataclass
-class Research:
-    id: str
-    nome: str
-    agregados: List[Aggregate] = field(default_factory=list)
-
-@dataclass
-class RootData:
-    research_list: List[Research]
-
-class RootDataIterator:
-    def __init__(self, research_list: List[Research]):
-        self.research_list = research_list
-        self.index = 0
-
-    def __iter__(self):
-        return self
-
-    def __next__(self):
-        if self.index < len(self.research_list):
-            result = self.research_list[self.index]
-            self.index += 1
-            return result
-        else:
-            raise StopIteration
+import random
+from typing import List, Dict, Any, Optional
+from .models import RootData, Research, Aggregate
 
 class Client:
     BASE_URL = "https://servicodados.ibge.gov.br/api/v3/agregados"
 
-    def get_root_data(self) -> RootData:
+    def __init__(self):
+        self._root_data = None
+
+    def _fetch_root_data(self) -> RootData:
         """Fetch the root data from the API and convert it to a structured Python object."""
         response = requests.get(f"{self.BASE_URL}")
         response.raise_for_status()
@@ -53,52 +25,70 @@ class Client:
         
         return RootData(research_list=researches)
 
-    def get_metadata(self, aggregate_id: str) -> Dict[str, Any]:
-        """Fetch metadata for a specific aggregate ID."""
+    def get_root_data(self) -> RootData:
+        """Retrieve or fetch the root data."""
+        if self._root_data is None:
+            self._root_data = self._fetch_root_data()
+        return self._root_data
+
+    def get_metadata(self, aggregate_id: Optional[str] = None) -> Dict[str, Any]:
+        """Fetch metadata for a specific aggregate ID. If no ID is provided, fetch a random one."""
+        # Fetch the list of all aggregate IDs
+        all_aggregate_ids = self.list_all_aggregate_ids()
+        
+        # Validate the provided aggregate_id or select a random one if none is provided
+        if aggregate_id is None:
+            aggregate_id = random.choice(all_aggregate_ids)
+        elif aggregate_id not in all_aggregate_ids:
+            raise ValueError(f"Invalid aggregate ID. Choose from the following: {all_aggregate_ids}")
+        
+        # Fetch metadata for the selected aggregate ID
         response = requests.get(f"{self.BASE_URL}/{aggregate_id}/metadados")
+        response.raise_for_status()
+        return response.json()
+
+    def search_data(self, query: Dict[str, str]) -> Dict[str, Any]:
+        """Search for data with specific parameters."""
+        response = requests.get(f"{self.BASE_URL}/search", params=query)
         response.raise_for_status()
         return response.json()
 
     def get_root_data_as_dataframe(self) -> pd.DataFrame:
         """Fetch the root data from the API and convert it to a Pandas DataFrame."""
-        response = requests.get(f"{self.BASE_URL}")
-        response.raise_for_status()
-        data = response.json()
-
-        # Flatten the nested structure for DataFrame creation
+        root_data = self.get_root_data()
         records = []
-        for item in data:
-            for agg in item.get('agregados', []):
+        for research in root_data.research_list:
+            for aggregate in research.agregados:
                 records.append({
-                    'research_id': item['id'],
-                    'research_name': item['nome'],
-                    'aggregate_id': agg['id'],
-                    'aggregate_name': agg['nome']
+                    'research_id': research.id,
+                    'research_name': research.nome,
+                    'aggregate_id': aggregate.id,
+                    'aggregate_name': aggregate.nome
                 })
 
         df = pd.DataFrame(records)
         return df
 
-    def get_root_data_iterable(self) -> RootDataIterator:
-        """Fetch the root data and return an iterable object."""
+    def list_all_aggregate_ids(self) -> List[str]:
+        """List all available aggregate IDs."""
         root_data = self.get_root_data()
-        return RootDataIterator(root_data.research_list)
+        aggregate_ids = []
+        for research in root_data.research_list:
+            for aggregate in research.agregados:
+                aggregate_ids.append(aggregate.id)
+        return aggregate_ids
 
-# Example usage
-client = Client()
+    def __repr__(self):
+        return f"<Client with {len(self)} research items>"
 
-# Get structured data using data classes
-root_data = client.get_root_data()
-for research in root_data.research_list:
-    print(f"Research ID: {research.id}, Name: {research.nome}")
-    for aggregate in research.agregados:
-        print(f"  Aggregate ID: {aggregate.id}, Name: {aggregate.nome}")
+    def __len__(self):
+        """Return the number of research items."""
+        return len(self.get_root_data().research_list)
 
-# Get data as a Pandas DataFrame
-df = client.get_root_data_as_dataframe()
-print(df.head())
+    def __getitem__(self, index):
+        """Get a research item by index."""
+        return self.get_root_data().research_list[index]
 
-# Use custom iterator for direct iteration
-root_data_iter = client.get_root_data_iterable()
-for research in root_data_iter:
-    print(f"ID: {research.id}, Name: {research.nome}")
+    def __iter__(self):
+        """Return an iterator over the research items."""
+        return iter(self.get_root_data().research_list)
