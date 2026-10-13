@@ -1,9 +1,6 @@
 # pySidraData
 
-![Python Version](https://img.shields.io/badge/python-3.6%2B-blue)
 ![License](https://img.shields.io/badge/license-MIT-green)
-[![Build Status](https://github.com/nandevers/pySidraData/workflows/Build/badge.svg)](https://github.com/nandevers/pySidraData/actions)
-[![Coverage Status](https://coveralls.io/repos/github/nandevers/pySidraData/badge.svg?branch=main)](https://coveralls.io/github/nandevers/pySidraData?branch=main)
 
 `pySidraData` is a Python client for interacting with the IBGE (Instituto Brasileiro de Geografia e Estatística) API for aggregate data. It provides an easy-to-use interface to fetch, manipulate, and analyze data from the IBGE database.
 
@@ -13,7 +10,7 @@
 - Retrieve metadata for specific aggregate IDs.
 - Convert data to a Pandas DataFrame for analysis.
 - Easy-to-use and extendable structure.
-- Supports Python 3.6 and above.
+- Installation metadata is available in `pyproject.toml` and `setup.py`; check dependency compatibility in your intended Python environment.
 
 ## Installation
 
@@ -59,7 +56,7 @@ print(df.head())
 
 ## Documentation
 
-The full documentation for `pySidraData` can be found [here](https://github.com/nandevers/pySidraData/wiki).
+Start with the [example notebook](examples/examples.ipynb), the source in [pySidraData/](pySidraData/), and the [contribution guide](CONTRIBUTING.md). Example execution and runtime compatibility have not been verified as part of this documentation update.
 
 ## Contributing
 
@@ -70,12 +67,7 @@ We welcome contributions to `pySidraData`! If you have an idea for a feature or 
 - **Pull Requests**: If you want to contribute code, fork the repository and create a pull request with your changes.
 - **Documentation**: Help improve our documentation or add new examples.
 
-We use `pre-commit` hooks to ensure code quality. Please install the hooks before making commits:
-
-```bash
-pip install pre-commit
-pre-commit install
-```
+Development tools are listed in `requirements-dev.txt` and the package metadata. A repository hook configuration is not currently provided.
 
 ### Setting Up the Development Environment
 
@@ -104,7 +96,7 @@ To set up the development environment, follow these steps:
 4. Run the tests to make sure everything is set up correctly:
 
     ```bash
-    python -m unittest discover tests
+    python -m unittest discover pySidraData/tests
     ```
 
 ### Running Tests
@@ -112,7 +104,7 @@ To set up the development environment, follow these steps:
 We use `unittest` for testing. To run the tests, use the following command:
 
 ```bash
-python -m unittest discover tests
+python -m unittest discover pySidraData/tests
 ```
 
 Make sure all tests pass before submitting a pull request.
